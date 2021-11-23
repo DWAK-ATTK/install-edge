@@ -12,7 +12,7 @@ Another tool for the toolbox.
 
 
 # Alternatives  
-This simple powershell script is a great alternative, and is in fact what install-edge was based on.  
+This [simple powershell](https://techexpert.tips/powershell/powershell-installing-microsoft-edge/) script is a great alternative, and is in fact what install-edge was based on.  
 
 ``` powershell
 md -Path $env:temp\edgeinstall -erroraction SilentlyContinue | Out-Null
