@@ -1,5 +1,6 @@
 # Download  
-Make sure you have installed .NET 6.0 prior to downloading install-edge.  
+Make sure you have installed [.NET 6.0](https://dotnet.microsoft.com/download/dotnet/6.0) prior to downloading install-edge.  
+[.NET Runtime 6.x]
 
 Download the install-edge app from the Releases section of this repo.  
 
