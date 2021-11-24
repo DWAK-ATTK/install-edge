@@ -24,7 +24,9 @@ Flags:
 
 
 # Why?  
-Another tool for the toolbox.
+Another tool for the toolbox.  
+
+Also, new Windows Server machines typically only have IE 11 in 'Enhanced Security Mode' pre-installed.  Personally I get pretty sick of having to remember how to disable that mode or add the myriad of exceptions to the security filter in order to download a new browser.
 
 
 # Alternatives  
