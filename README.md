@@ -14,6 +14,11 @@ Flags:
  --quiet       Supresses all console messages except uncaught exceptions.
 
  --force       Skips "Edge already installed" check.
+
+ --query       Only displays the installed version of Edge and its components.  
+               --quiet has no effect with --query.  
+
+ --help        Show the usage screen.  No other parameters will be considered when this one is present.
 ```
 
 

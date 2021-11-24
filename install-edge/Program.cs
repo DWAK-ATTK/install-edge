@@ -10,6 +10,27 @@ string edgeUrl = @"https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamings
 string downloadPath = Path.Combine(Path.GetTempPath(), "automated-edge-download", "MicrosoftEdgeEnterpriseX64.msi");
 bool quiet = args.Contains("--quiet");
 bool force = args.Contains("--force");
+bool queryMode = args.Contains("--query");
+bool showHelp = args.Contains("--help");
+
+//	Check for help
+if(showHelp) {
+	PrintUsage();
+	return;
+}
+
+//	Check for query mode: just display installed Edge versions, or report non-presence
+if (queryMode) {
+	if(!Edge.IsInstalled()) { Console.WriteLine("Edge is not installed."); }
+	else {
+		int maxKeyLength = Edge.Items.Select(i => i.Key.Length).Max();
+
+		foreach (string key in Edge.Items.Keys) {
+			PrintLine($"{key.PadRight(maxKeyLength)} : {Edge.Items[key]}");
+		}
+	}
+	return;
+}
 
 //	Check if Edge is already installed.  If so, exit.
 if (!force && Edge.IsInstalled()) {
@@ -48,6 +69,20 @@ using (Downloader downloader = new Downloader(edgeUrl, downloadPath)) {
 		edgeInstaller.WaitForExit();
 	}
 	PrintLine("done.");
+}
+
+
+
+void PrintUsage() {
+	Console.WriteLine("install-edge.exe --help");
+	Console.WriteLine("install-edge.exe --query");
+	Console.WriteLine("install-edge.exe [--force] [--quiet]");
+	Console.WriteLine();
+	Console.WriteLine("  --query    Displays the currently installed Edge version");
+	Console.WriteLine("  --help     This screen");
+	Console.WriteLine("  --force    Skip the 'is Edge already installed' check");
+	Console.WriteLine("  --quiet    Do not display any output to the console");
+	Console.WriteLine();
 }
 
 
