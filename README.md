@@ -3,8 +3,16 @@ Download the exe from the Releases section of this repo.
 
 
 # Usage  
-The current version contains no input parameters or customizations.  Just run it from the command line (cmd, powershell, pwsh, etc).  
 ONLY FOR WINDOWS.  
+Commend-line tool.  
+
+```
+Flags:
+ --quiet       Supresses all console messages except uncaught exceptions.
+
+ --force       Skips "Edge already installed" check.
+```
+
 
 
 # Why?  
