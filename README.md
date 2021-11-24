@@ -1,5 +1,7 @@
 # Download  
-Download the exe from the Releases section of this repo.  
+Make sure you have installed .NET 6.0 prior to downloading install-edge.  
+
+Download the install-edge app from the Releases section of this repo.  
 
 
 # Usage  
