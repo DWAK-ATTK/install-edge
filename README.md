@@ -11,14 +11,21 @@ Commend-line tool.
 
 ```
 Flags:
- --quiet       Supresses all console messages except uncaught exceptions.
+ --quiet           Supresses all console messages except uncaught exceptions.
 
- --force       Skips "Edge already installed" check.
+ --force           Skips "Edge already installed" check.
 
- --query       Only displays the installed version of Edge and its components.  
-               --quiet has no effect with --query.  
+ --browser<value>  Select which browser you would like to install.
+                   Valid values are "edge", "firefox", and "chrome".  A value of "all" will specify all known browsers.
+                   Multiple flags may be present.  e.g. `--browser:edge --browser:chrome`
+                   DEFUALT: "edge"
 
- --help        Show the usage screen.  No other parameters will be considered when this one is present.
+--download-only    Only download the installers, but do not run them.
+
+ --query           Only displays the installed version of Edge and its components.  
+                   --quiet has no effect with --query.  
+
+ --help            Show the usage screen.  No other parameters will be considered when this one is present.
 ```
 
 

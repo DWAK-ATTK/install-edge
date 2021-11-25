@@ -4,71 +4,120 @@ using System.Diagnostics;
 
 
 int width = Console.WindowWidth;
-double? lastProgress = 0.0;
 
-string edgeUrl = @"https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/a2662b5b-97d0-4312-8946-598355851b3b/MicrosoftEdgeEnterpriseX64.msi";
-string downloadPath = Path.Combine(Path.GetTempPath(), "automated-edge-download", "MicrosoftEdgeEnterpriseX64.msi");
 bool quiet = args.Contains("--quiet");
 bool force = args.Contains("--force");
 bool queryMode = args.Contains("--query");
+bool downloadOnly = args.Contains("--download-only");
 bool showHelp = args.Contains("--help");
 
+string[] browsers = { "edge" };
+Dictionary<string, IBrowser> browserMap = new Dictionary<string, IBrowser> {
+	{"edge", new Edge() }, {"firefox", new FireFox()}, {"chrome", new Chrome()}
+};
+
+if (showHelp || queryMode) { quiet = false; }
+
+
 //	Check for help
-if(showHelp) {
+if (showHelp) {
 	PrintUsage();
 	return;
 }
 
+//	Obtain list of browsers
+if (args.Any(a => a.StartsWith("--browser"))) {
+	if (args.Contains("--browser:all")) {
+		browsers = new string[] { "edge", "firefox", "chrome" };
+	} else {
+		browsers = args
+			.Where(a => a.StartsWith("--browser") && -1 < a.IndexOf(':'))
+			.Select(a => a.Substring(a.IndexOf(':') + 1).Trim().ToLower())
+			.ToArray();
+		if (0 == browsers.Length) { browsers = new string[] { "edge" }; }
+	}
+}
+
 //	Check for query mode: just display installed Edge versions, or report non-presence
 if (queryMode) {
-	if(!Edge.IsInstalled()) { Console.WriteLine("Edge is not installed."); }
-	else {
-		int maxKeyLength = Edge.Items.Select(i => i.Key.Length).Max();
-
-		foreach (string key in Edge.Items.Keys) {
-			PrintLine($"{key.PadRight(maxKeyLength)} : {Edge.Items[key]}");
+	foreach (string browser in browsers) {
+		if (!browserMap.ContainsKey(browser)) {
+			PrintLine($"Unrecognized browser: {browser}");
+			continue;
 		}
+		PrintInstalledBrowser(browserMap[browser]);
 	}
 	return;
 }
 
-//	Check if Edge is already installed.  If so, exit.
-if (!force && Edge.IsInstalled()) {
-	PrintLine("Edge web browser is already installed.");
-	int maxKeyLength = Edge.Items.Select(i => i.Key.Length).Max();
 
-	foreach (string key in Edge.Items.Keys) {
-		PrintLine($"{key.PadRight(maxKeyLength)} : {Edge.Items[key]}");
-	}
-	return;
-}
-
-if (!Directory.Exists(Path.GetDirectoryName(downloadPath))) { Directory.CreateDirectory(Path.GetDirectoryName(downloadPath)); }
-if (File.Exists(downloadPath)) { File.Delete(downloadPath); }
-
-using (Downloader downloader = new Downloader(edgeUrl, downloadPath)) {
-	downloader.ProgressChanged += (totalBytes, downloadedBytes, percentComplete) => {
-		if (lastProgress <= percentComplete - 10.0 || percentComplete == 100.0) {
-			PrintLine($"downloaded {downloadedBytes} ({percentComplete}%)");
-			lastProgress = percentComplete;
-		}
+//	Hook up the DisplayMessage event for each browser.
+//		TODO:	Only hook up the event is not in quiet mode.
+foreach (string browserName in browsers) {
+	IBrowser browser = browserMap[browserName];
+	browser.DisplayMessage += (s, e) => {
+		PrintLine($"[{((IBrowser)s).Name}] {e.Message}");
 	};
+}
 
-	PrintLine("Beginning download...");
-	await downloader.StartDownload();
-	PrintLine("Download complete.  Beginning install...");
 
-	Process edgeInstaller = Process.Start(new ProcessStartInfo { FileName = downloadPath, UseShellExecute = true });
-	if (edgeInstaller != null) {
-		edgeInstaller.Exited += (s, e) => {
-			PrintLine("Cleaning up...");
-			File.Delete(downloadPath);
-			Directory.Delete(Path.GetDirectoryName(downloadPath), true);
-		};
-
-		edgeInstaller.WaitForExit();
+//	For each requested browser, check if it is already installed.  If so, skip.
+foreach (string browserName in browsers) {
+	if (!browserMap.ContainsKey(browserName)) {
+		PrintLine($"Unrecognized browser: {browserName}");
+		continue;
 	}
-	PrintLine("done.");
+	IBrowser browser = browserMap[browserName];
+	if (!force && browser.IsInstalled()) {
+		PrintLine($"{browser.Name} web browser is already installed.");
+		PrintInstalledBrowser(browser);
+		continue;
+	}
+
+	browser.Download();
+}
+
+if (!downloadOnly) {
+	foreach (string browserName in browsers) {
+		if (!browserMap.ContainsKey(browserName)) {
+			continue;
+		}
+
+		IBrowser browser = browserMap[browserName];
+		if (browser.IsDownloaded) {
+			browser.Install();
+			browser.CleanUp();
+		}
+	}
+} else {
+	//	download-only
+	foreach (string browserName in browsers) {
+		if (!browserMap.ContainsKey(browserName)) {
+			continue;
+		}
+
+		IBrowser browser = browserMap[browserName];
+		if (browser.IsDownloaded) {
+			PrintLine($"{browser.Name} downloaded to\r\n'{browser.DownloadDestinationPath}'");
+		}
+	}
+}
+
+
+
+
+
+void PrintInstalledBrowser(IBrowser browser) {
+	if (!browser.IsInstalled()) {
+		PrintLine($"{browser.Name} is not installed.");
+	} else {
+		int maxKeyLength = browser.Items.Select(i => i.Key.Length).Max();
+
+		foreach (string key in browser.Items.Keys) {
+			PrintLine($"{key.PadRight(maxKeyLength)} : {browser.Items[key]}");
+		}
+	}
+	Console.WriteLine();
 }
 
 
@@ -76,12 +125,17 @@ using (Downloader downloader = new Downloader(edgeUrl, downloadPath)) {
 void PrintUsage() {
 	Console.WriteLine("install-edge.exe --help");
 	Console.WriteLine("install-edge.exe --query");
-	Console.WriteLine("install-edge.exe [--force] [--quiet]");
+	Console.WriteLine("install-edge.exe [--force] [--quiet] [--browser:<value>] [--download-only]");
 	Console.WriteLine();
-	Console.WriteLine("  --query    Displays the currently installed Edge version");
-	Console.WriteLine("  --help     This screen");
-	Console.WriteLine("  --force    Skip the 'is Edge already installed' check");
-	Console.WriteLine("  --quiet    Do not display any output to the console");
+	Console.WriteLine("  --query            Displays the currently installed Edge version");
+	Console.WriteLine("  --help             This screen");
+	Console.WriteLine("  --force            Skip the 'is Edge already installed' check");
+	Console.WriteLine("  --download-only    Only download the installers, do not run them.");
+	Console.WriteLine("  --browser:<value>  Specify which browser(s) you want to install.");
+	Console.WriteLine("                     <value> may be 'edge', 'chrome', 'forefox', or 'all'");
+	Console.WriteLine("                     This flag may be specified multiple times, ");
+	Console.WriteLine("                          e.g. --browser:firefox --browser:edge");
+	Console.WriteLine("  --quiet            Do not display any output to the console");
 	Console.WriteLine();
 }
 
