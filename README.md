@@ -6,8 +6,7 @@ Download the install-edge app from the Releases section of this repo.
 
 
 # Usage  
-ONLY FOR WINDOWS.  
-Commend-line tool.  
+ONLY FOR WINDOWS.  Commend-line tool to download and install MS Edge, Mozilla FireFox, and/or Google Chrome.
 
 ```
 Flags:
