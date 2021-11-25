@@ -15,7 +15,7 @@ Flags:
 
  --force           Skips "Edge already installed" check.
 
- --browser<value>  Select which browser you would like to install.
+ --browser:<value> Select which browser you would like to install.
                    Valid values are "edge", "firefox", and "chrome".  A value of "all" will specify all known browsers.
                    Multiple flags may be present.  e.g. `--browser:edge --browser:chrome`
                    DEFUALT: "edge"
